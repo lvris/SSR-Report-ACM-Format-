@@ -294,7 +294,7 @@ This is not a tuning problem. The hydration tax persists despite identical bundl
 Based on our empirical findings, we propose the following selection criteria:
 
 \begin{itemize}
-    \item \textbf{SSG/ISR}: Recommended for content-driven sites (blogs, documentation, e-commerce catalogs) where data changes infrequently. Offers optimal LCP (477--959ms) and high throughput (76 req/s).
+    \item \textbf{SSG/ISR}: Recommended for content-driven sites (blogs, documentation) where data changes infrequently. Offers optimal LCP (477--959ms) and high throughput (76 req/s).
     \item \textbf{SSR}: Suitable for personalized or real-time content requiring per-request data freshness, but should be paired with caching strategies to mitigate scalability constraints.
     \item \textbf{CSR}: Appropriate for highly interactive applications (dashboards, admin panels) where initial content visibility is less critical than post-load interactivity.
 \end{itemize}
@@ -303,7 +303,7 @@ For applications where the optimal strategy is unclear, our Factory Pattern meth
 
 \subsection{Emerging Solutions}
 
-To address the fundamental limitations exposed by our study---SSR's scalability bottleneck and the hydration tax of pre-rendered strategies---several architectural advances have emerged:
+To address the limitations exposed by our study---SSR's scalability bottleneck and the hydration tax of pre-rendered strategies---several architectural advances have emerged:
 
 \begin{itemize}
     \item \textbf{Streaming SSR}~\cite{hulthen2024streaming}: Delivers HTML progressively as components resolve, reducing perceived TTFB without sacrificing data freshness.
