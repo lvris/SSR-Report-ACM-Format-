@@ -1,0 +1,126 @@
+\documentclass[sigplan,screen]{acmart} 
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+\setcopyright{none}
+\acmDOI{}
+\acmISBN{}
+\acmConference[Group Project Final Report]{Comparison of Server-Side Rendering Techniques}{Spring 2025}{Aalto University, CS-E4460}
+\acmYear{2025}
+
+%% -------------------
+\title[SSR Comparison Report]{An Empirical Comparison of Modern Server-Side Rendering Techniques in Web Development}
+\settopmatter{printacmref=false}
+
+\author{Authors}
+\email{author@university.edu}
+% \affiliation{%
+%   \institution{Department of Computer Science}
+%   \city{University Name}
+%   \country{Country}
+% }
+
+%%
+\begin{abstract}
+This report presents an empirical study comparing various Server-Side Rendering (SSR) techniques commonly used in modern web application development...
+\end{abstract}
+
+\keywords{Server-Side Rendering, SSR, Static Site Generation, SSG, Hybrid Rendering, Web Performance, LCP, TTI}
+
+\begin{document}
+\maketitle
+
+%% -------------------
+%% Contents
+%% -------------------
+
+\section{Introduction}
+\label{sec:introduction}
+The evolution of web applications has seen various shifts in where the rendering workload is executed, moving from pure server-side rendering to client-side rendering (CSR)...
+
+\section{Related Work}
+\label{sec:related-work}
+
+\subsection{Traditional SSR}
+The initial shift toward server-side execution for client-side frameworks, exemplified by early React SSR with frameworks like Next.js, was primarily driven by the need for faster First Contentful Paint (FCP) and robust SEO~\cite{vallamsetla2024impact, jartarghar2022react}. The process involves Server Rendering to produce static HTML, followed by Hydration to attach interactivity. This early work established the performance benefit of pre-rendering.
+
+A broader comparison~\cite{hanafi2024comparison} of methods revealed that the choice of rendering strategy must align with content dynamism. This review elevated Static Site Generation (SSG)---which is essentially SSR performed at build time---as the optimal hybrid strategy for content that is mostly static, prioritizing speed and scalability.
+
+\subsection{Hybrid Architectures}
+Addressing the legacy SSR bottlenecks led to a new era of hybrid rendering, focusing on decoupling and optimizing the data delivery and client-side processing phases.
+
+To reduce ``data fetching latency'' and accelerate the Time to First Byte (TTFB), two techniques emerged:
+
+\begin{itemize}
+    \item \textbf{Streaming}~\cite{hulthen2024streaming}: This method allows the server to deliver HTML in chunks as components become ready, ensuring a non-blocking initial render.
+    \item \textbf{Edge Computing and Caching}~\cite{vepsalainen2025potential}: By deploying rendering logic and caching results closer to the user on CDN Edge Nodes, the distance and time for data transfer are dramatically minimized, further improving TTFB.
+\end{itemize}
+
+The issue of ``hydration blocking,'' where large JavaScript bundles slow the Time to Interactive (TTI), goes through component-level control:
+
+\begin{itemize}
+    \item \textbf{Progressive/Selective Hydration}~\cite{chen2025improving}: This technique prioritizes the hydration of critical or visible components, deferring less important ones. By activating interactive elements in smaller, prioritized chunks, it achieves a significantly shorter TTI.
+    
+    \item \textbf{Islands Architecture}~\cite{miller2020islands}: This pattern decomposes the page into static (zero-JS overhead) regions and small, independent, interactive ``islands''. Only the small island components require hydration, drastically reducing the total JavaScript payload and client-side processing time.
+\end{itemize}
+
+For minimizing client-side payload, React Server Components (RSC)~\cite{react2025rsc} represent a paradigm shift by rendering entirely on the server, with no JavaScript for these components ever sent to the client. This offers zero hydration cost, minimal client-side bundle size, and enables Data Proximity, allowing components to access backend resources without an API layer.
+
+
+\section{Methodology and Implementation}
+\label{sec:methodology}
+
+\subsection{Frameworks}
+
+
+\subsection{Testing}
+
+
+\begin{figure}[h]
+  \centering
+  \framebox{\parbox{0.8\columnwidth}{\centering
+    \vspace{1cm}
+    \textbf{Figure Placeholder: System Architecture} \\
+    \small\textit{Diagram showing the four rendering paths (SSR, SSG, Hybrid).}
+    \vspace{1cm}
+  }}
+  \caption{Conceptual overview of the four evaluated rendering architectures.}
+  \label{fig:architecture}
+\end{figure}
+
+\section{Results}
+\label{sec:results}
+Table \ref{tab:performance} summarizes the key performance metrics observed across the four implementations.
+
+\begin{table}[h]
+  \caption{Comparative Performance Metrics (Average of 5 Runs)}
+  \label{tab:performance}
+  \begin{tabular}{lccc}
+    \toprule
+    Metric & Pure SSR (ms) & SSG (ms) & Hybrid (ms)\\
+    \midrule
+    TTFB & 350 & \textbf{50} & 120 \\
+    LCP & 1200 & \textbf{850} & 950 \\
+    TTI & 3500 & 2800 & \textbf{2200} \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\section{Analysis and Discussion}
+\label{sec:analysis}
+
+Sometext...
+
+\section{Conclusions and Future Work}
+\label{sec:conclusions}
+
+Sometext...
+
+%% -------------------
+%% References
+%% -------------------
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{ssr-base} 
+\end{document}
