@@ -13,10 +13,23 @@
 
 %% -------------------
 \title[SSR Comparison Report]{An Empirical Comparison of Server-Side Rendering Techniques in Web Development}
-\settopmatter{printacmref=false}
+\settopmatter{printacmref=false, authorsperrow=4}
 
-\author{Authors}
-\email{author@university.edu}
+\author{Minghao Guo}
+\affiliation{}
+\email{102747261}
+
+\author{Ville Hakoniemi}
+\affiliation{}
+\email{782454}
+
+\author{Vo Khai Anh}
+\affiliation{}
+\email{789583}
+
+\author{Valtteri Kyber}
+\affiliation{}
+\email{909415}
 % \affiliation{%
 %   \institution{Department of Computer Science}
 %   \city{University Name}
@@ -25,7 +38,7 @@
 
 %%
 \begin{abstract}
-Server-Side Rendering (SSR) addresses the SEO and initial load limitations of Single Page Applications but introduces hydration overhead that delays interactivity. This study presents an empirical comparison of four rendering strategies---SSR, Client-Side Rendering (CSR), Static Site Generation (SSG), and Incremental Static Regeneration (ISR)---using a controlled Factory Pattern methodology in Next.js that isolates rendering strategy as the sole variable. Our Lighthouse measurements under simulated Slow 4G conditions reveal fundamental trade-offs: SSR suffers poor scalability (56.89 req/s at 346ms under load), CSR delayed content visibility (2.6s LCP), while SSG/ISR deliver optimal initial paints (LCP: 477--959ms) but incur severe hydration tax (2+ seconds TBT). These findings validate that emerging component-level paradigms such as Islands Architecture and React Server Components represent necessary architectural shifts rather than incremental optimizations.
+Server-Side Rendering (SSR) addresses the SEO and initial load limitations of Single Page Applications but introduces hydration overhead that delays interactivity. This study presents an empirical comparison of four rendering strategies---SSR, Client-Side Rendering (CSR), Static Site Generation (SSG), and Incremental Static Regeneration (ISR)---using a controlled Factory Pattern methodology in Next.js that isolates rendering strategy as the sole variable. Our empirical measurements reveal fundamental trade-offs: SSR suffers poor scalability (56.89 req/s at 346ms under load), CSR delays content visibility (2.6s LCP), while SSG/ISR deliver optimal initial paints (LCP: 477--959ms) but incur severe hydration tax (2+ seconds TBT). These findings validate that emerging component-level paradigms such as Islands Architecture and React Server Components represent necessary architectural shifts rather than incremental optimizations.
 \end{abstract}
 
 \keywords{Server-Side Rendering, SSR, Static Site Generation, SSG, Hybrid Rendering, Web Performance, LCP, TBT}
@@ -40,21 +53,23 @@ Server-Side Rendering (SSR) addresses the SEO and initial load limitations of Si
 \section{Introduction}
 \label{sec:introduction}
 
-While Server-Side Rendering (SSR) mitigates the SEO and initial load bottlenecks of Single Page Applications (SPAs), it introduces a "Hydration" cost that delays interactivity. While numerous architectural patterns have been proposed to alleviate these issues, and the theoretical trade-offs are well-documented (e.g., SSR improves SEO but increases server load; CSR offers rich interactivity but suffers from slower initial load), empirical decision-making remains difficult. 
+While SSR mitigates the SEO and initial load bottlenecks of Single Page Applications (SPAs), it introduces a ``Hydration'' cost that delays interactivity. Although the theoretical trade-offs are well-documented (e.g., SSR improves SEO but increases server load; CSR offers rich interactivity but suffers from slower initial load), empirical decision-making remains difficult.
 
-Developers rely on heuristics or "best practices" that may not apply to their specific use cases. Our methodology addresses this ambiguity: by employing a modular design, we demonstrate how developers can switch rendering modes with minimal code changes to rigorously compare performance and identify specific bottlenecks within their application logic.
+Developers rely on heuristics or ``best practices'' that may not apply to their specific use cases. Our methodology addresses this ambiguity: by employing a modular design, we demonstrate how developers can switch rendering modes with minimal code changes to rigorously compare performance and identify specific bottlenecks within their application logic.
 
-This report presents an empirical study comparing these four fundamental rendering techniques (SSR, CSR, SSG, and ISR). By utilizing a strictly controlled "Factory Pattern" methodology, we isolate the rendering strategy as the sole variable. We evaluate each approach against Core Web Vitals (CWV), such as Largest Contentful Paint (LCP) and Total Blocking Time (TBT), alongside server-side throughput metrics. Finally, based on the comparative results, we analyze the specific use cases for each strategy and discuss the future trajectory of web rendering architectures.
+This report presents an empirical study comparing these four fundamental rendering techniques (SSR, CSR, SSG, and ISR). We evaluate each approach against Core Web Vitals (CWV). Finally, based on the comparative results, we analyze the specific use cases for each strategy and discuss the future trajectory of web rendering architectures.
 
 \section{Related Work}
 \label{sec:related-work}
 The evolution of web rendering architectures has been driven by a constant balancing act between server resources, network latency, and client-side processing power.
 
 \subsection{The CSR vs. SSR Dichotomy}
-Early research established the fundamental trade-offs between server and client rendering. Vallamsetla et al.~\cite{vallamsetla2024impact} highlighted that while Single Page Applications (SPAs) utilizing CSR revolutionized interactivity, they introduced significant SEO and initial load bottlenecks. Conversely, SSR was reintroduced to solve these latency issues by delivering pre-rendered HTML. However, as noted by Jartarghar et al.~\cite{jartarghar2022react}, traditional SSR introduces the "Hydration" cost---the CPU overhead required to make static HTML interactive---which can negatively impact the Time to Interactive (TTI).
+Early research established the fundamental trade-offs between server and client rendering. Vallamsetla et al.~\cite{vallamsetla2024impact} highlighted that while Single Page Applications (SPAs) utilizing CSR revolutionized interactivity, they introduced significant SEO and initial load bottlenecks. Conversely, SSR was reintroduced to solve these latency issues by delivering pre-rendered HTML. However, as noted by Jartarghar et al.~\cite{jartarghar2022react}, traditional SSR introduces the ``Hydration'' cost---the CPU overhead required to make static HTML interactive---which can negatively impact the Time to Interactive (TTI).
 
 \subsection{Static and Hybrid Approaches}
 To mitigate the runtime costs of SSR, Static Site Generation (SSG) became prevalent for content-heavy sites. Hanafi et al.~\cite{hanafi2024comparison} demonstrated that SSG offers the optimal time-to-first-byte (TTFB) by shifting rendering costs to build time. However, SSG struggles with dynamic data scaling. This limitation led to the adoption of Incremental Static Regeneration (ISR), which allows static pages to be updated in the background, attempting to combine the speed of SSG with the dynamism of SSR.
+
+Figure~\ref{fig:rendering-timeline} illustrates the request lifecycles of the four strategies by mapping the temporal distribution of HTML generation and data fetching. This visualization highlights the distinct execution flows and inherent latency shifts relative to the user's request.
 
 \begin{figure}[h]
   \centering
@@ -63,19 +78,17 @@ To mitigate the runtime costs of SSR, Static Site Generation (SSG) became preval
   \label{fig:rendering-timeline}
 \end{figure}
 
-Understanding these strategies requires analyzing when the HTML is generated and where the data fetching occurs relative to the user's request. To visualize these distinct execution flows and identify the latency shifts inherent in each approach, we map the request lifecycles of the four strategies evaluated in this study. This temporal distribution of work is illustrated in Figure~\ref{fig:rendering-timeline}.
-
-Furthermore, while React Server Components (RSC)~\cite{react2025rsc}, the technique that has been applied with Next.js's APP Router paradigm, represent the bleeding edge of zero-bundle-size rendering, identifying their specific benefits requires a solid baseline of standard rendering techniques. By focusing our study on the mature Pages Router paradigm (SSR/CSR/SSG/ISR), we aim to establish a strictly controlled reference point. This approach allows us to isolate the specific impact of \textit{data-fetching timing} (Build time vs. Request time vs. Runtime) without the additional complexity of the RSC serialization protocol.
+Furthermore, React Server Components (RSC)~\cite{react2025rsc} -- the technique that has been applied with Next.js's App Router paradigm -- represent the bleeding edge of zero-bundle-size rendering. By focusing our study on the mature Pages Router paradigm, we aim to establish a strictly controlled reference point. This approach allows us to isolate the specific impact of \textit{data-fetching timing} (Build time vs. Request time vs. Runtime) without the additional complexity of the RSC serialization protocol.
 
 \section{Methodology and Implementation}
 \label{sec:methodology}
 
 \subsection{Experimental Framework}
 
-To ensure a fair and isolated comparison of rendering strategies, we built a controlled benchmark environment using the following technology stack:
+To ensure a fair and isolated comparison of rendering strategies, we built a controlled benchmark environment\footnote{The complete benchmark suite is available at \url{https://github.com/lvris/ssr}.} using the following technology stack:
 
 \begin{itemize}
-    \item \textbf{Next.js 15.5.5 (Pages Router)}: We deliberately chose the Pages Router over the newer App Router to isolate the comparison between traditional rendering strategies (SSR, CSR, SSG, ISR) without the influence of React Server Components (RSC), which would introduce additional variables.
+    \item \textbf{Next.js 15.5.5}: Pages Router over the newer App Router to isolate the influence of RSC.
     \item \textbf{React 19.1.0}: The underlying component framework for all rendering strategies.
     \item \textbf{Node.js 22.20.0}: Server runtime for SSR execution and k6 load testing.
     \item \textbf{Data Source}: A mocked API endpoint with configurable latency to simulate real-world backend response times.
@@ -108,10 +121,10 @@ Four factory functions wrap the target component with the appropriate Next.js da
     \item \textbf{createSSRPage()}: Uses \texttt{getServerSideProps} to fetch data on every request.
     \item \textbf{createCSRPage()}: Uses \texttt{useEffect} to fetch data on the client-side after mount.
     \item \textbf{createSSGPage()}: Uses \texttt{getStaticProps} to fetch data at build time.
-    \item \textbf{createISRPage()}: Uses \texttt{getStaticProps} with a parameter  \texttt{revalidate} for incremental regeneration.
+    \item \textbf{createISRPage()}: Uses \texttt{getStaticProps} returning a \texttt{revalidate} property for incremental regeneration.
 \end{itemize}
 
-This architecture guarantees that component rendering logic remains identical across all strategies, isolating the variable under test to the data-fetching and rendering timing alone. Figure~\ref{fig:factory-workflow} illustrates this workflow.
+This architecture guarantees that component rendering logic remains identical across all strategies, isolating the variable under test from the data-fetching and rendering timing alone. Figure~\ref{fig:factory-workflow} illustrates this workflow.
 
 \begin{figure}[h]
   \centering
@@ -126,7 +139,7 @@ We employed two complementary testing approaches to evaluate both user experienc
 
 \subsubsection{User Experience Metrics (Lighthouse)}
 
-Google Lighthouse was used to measure Core Web Vitals under controlled network conditions:
+Google Lighthouse was used to measure Core Web Vitals (as listed in Table~\ref{tab:metrics}) under controlled network conditions:
 
 \begin{itemize}
     \item \textbf{Device Emulation}: Mobile (430×932px, 2x device pixel ratio)
@@ -135,9 +148,8 @@ Google Lighthouse was used to measure Core Web Vitals under controlled network c
     \item \textbf{Iterations}: 5 runs per strategy, results averaged
 \end{itemize}
 
-The following metrics were collected:
 
-\begin{table}[H]
+\begin{table}[h]
   \caption{Lighthouse Metrics Definitions}
   \label{tab:metrics}
   \begin{tabular}{ll}
@@ -147,7 +159,6 @@ The following metrics were collected:
     TTFB & Time to First Byte from server \\
     FCP & First Contentful Paint \\
     LCP & Largest Contentful Paint \\
-    SI & Speed Index \\
     TBT & Total Blocking Time (hydration cost) \\
     CLS & Cumulative Layout Shift \\
     \bottomrule
@@ -184,7 +195,7 @@ All tests were executed under the following controlled conditions:
 
 \subsection{Lighthouse Performance Metrics}
 
-Table~\ref{tab:lighthouse} summarize the Core Web Vitals measured under Slow 4G network simulation (averaged over 5 runs per strategy).
+Table~\ref{tab:lighthouse} summarizes the Core Web Vitals measured under Slow 4G network simulation (averaged over 5 runs per strategy).
 
 \begin{table*}[!htb]
   \caption{Lighthouse Performance Metrics Comparison}
@@ -299,11 +310,13 @@ To address the fundamental limitations exposed by our study---SSR's scalability 
     \item \textbf{Edge Rendering}~\cite{vepsalainen2025potential}: Deploys rendering logic to CDN edge nodes, minimizing network latency.
     \item \textbf{Islands Architecture}~\cite{miller2020islands}: Isolates interactivity to small ``islands,'' eliminating hydration for static regions.
     \item \textbf{React Server Components}~\cite{react2025rsc}: Renders components entirely on the server with zero client-side JavaScript, achieving both fast paint and fast interactivity.
+    \item \textbf{Hypermedia-Driven Applications} \cite{gross2023hypermedia}: Streams fine-grained HTML updates to eliminate hydration overhead (TBT), shifting state management entirely back to the server.
+
 \end{itemize}
-These paradigms represent the necessary evolution beyond traditional rendering strategies, fundamentally decoupling content delivery from framework overhead.
-\noindent
-Hybrid approaches that blend static generation, selective interactivity, and server-driven components may ultimately offer a more balanced performance profile. As the hydration boundaries evolve and more work moves server-side, the distinctions between “static” and “dynamic” rendering will blur, making empirical evaluation increasingly important.
-% Datastar deserve to be mentioned, TA said it's a game changer, we can use AI to summary their doc or some random blog article into a paragraph saying the real frontier of rendering...
+
+These paradigms represent the necessary evolution beyond traditional rendering strategies, fundamentally decoupling content delivery from framework overhead. Hybrid approaches that blend static generation, selective interactivity, and server-driven components may ultimately offer a more balanced performance profile.
+
+As the hydration boundaries evolve and more work moves server-side, the distinctions between ``static'' and ``dynamic'' rendering will blur, making empirical evaluation increasingly important. The frontier of web rendering is increasingly defined by architectures that minimize client-side JavaScript altogether, signaling a shift toward more server-oriented and component-granular execution models.
 
 %% -------------------
 %% References
